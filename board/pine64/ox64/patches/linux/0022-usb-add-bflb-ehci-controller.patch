@@ -1,0 +1,72 @@
+From e01e59bbab9b2eb738969cc45ba646070fcf7f7b Mon Sep 17 00:00:00 2001
+From: Allen Martin <armartin@gmail.com>
+Date: Fri, 13 Jan 2023 02:38:06 -0800
+Subject: [PATCH] usb: add bflb ehci controller
+
+---
+ arch/riscv/boot/dts/bouffalolab/bl808-pine64-ox64.dts |  4 ++++
+ arch/riscv/boot/dts/bouffalolab/bl808-sipeed-m1s.dts  |  4 ++++
+ arch/riscv/boot/dts/bouffalolab/bl808.dtsi            | 10 ++++++++++
+ include/dt-bindings/mailbox/bflb-ipc.h                |  1 +
+ 4 files changed, 19 insertions(+)
+
+diff --git a/arch/riscv/boot/dts/bouffalolab/bl808-pine64-ox64.dts b/arch/riscv/boot/dts/bouffalolab/bl808-pine64-ox64.dts
+index ce80095940de..e62c1e40fa70 100644
+--- a/arch/riscv/boot/dts/bouffalolab/bl808-pine64-ox64.dts
++++ b/arch/riscv/boot/dts/bouffalolab/bl808-pine64-ox64.dts
+@@ -52,3 +52,7 @@ &sdhci0 {
+ &ipclic {
+ 	status = "okay";
+ };
++
++&ehci0 {
++	status = "okay";
++};
+diff --git a/arch/riscv/boot/dts/bouffalolab/bl808-sipeed-m1s.dts b/arch/riscv/boot/dts/bouffalolab/bl808-sipeed-m1s.dts
+index a3140c4f1d81..ed2d18482920 100644
+--- a/arch/riscv/boot/dts/bouffalolab/bl808-sipeed-m1s.dts
++++ b/arch/riscv/boot/dts/bouffalolab/bl808-sipeed-m1s.dts
+@@ -53,3 +53,7 @@ &sdhci0 {
+ &ipclic {
+ 	status = "okay";
+ };
++
++&ehci0 {
++	status = "okay";
++};
+diff --git a/arch/riscv/boot/dts/bouffalolab/bl808.dtsi b/arch/riscv/boot/dts/bouffalolab/bl808.dtsi
+index f1e354f58a4d..e89ac0c4f58d 100644
+--- a/arch/riscv/boot/dts/bouffalolab/bl808.dtsi
++++ b/arch/riscv/boot/dts/bouffalolab/bl808.dtsi
+@@ -90,6 +90,17 @@ BFLB_IPC_DEVICE_SDHCI
+ 			status = "disabled";
+ 		};
+ 
++		ehci0: usb@20072000 {
++			compatible = "generic-ehci";
++			reg = <0x20072000 0x1000>;
++			interrupts-extended = <&ipclic BFLB_IPC_SOURCE_M0
++						       BFLB_IPC_DEVICE_USB
++						       IRQ_TYPE_EDGE_RISING>;
++                       mboxes = <&ipclic BFLB_IPC_SOURCE_M0 BFLB_IPC_DEVICE_USB>;
++			clocks = <&xtal>;
++			status = "disabled";
++		};
++
+ 		ipclic: mailbox@30005000 {
+ 			compatible = "bflb,bl808-ipc";
+ 			reg = <0x30005000 0x20>,
+diff --git a/include/dt-bindings/mailbox/bflb-ipc.h b/include/dt-bindings/mailbox/bflb-ipc.h
+index e96fe62cbeb9..327e150384b9 100644
+--- a/include/dt-bindings/mailbox/bflb-ipc.h
++++ b/include/dt-bindings/mailbox/bflb-ipc.h
+@@ -13,5 +13,6 @@
+ /* Peripheral device ID */
+ #define BFLB_IPC_DEVICE_SDHCI		0
+ #define BFLB_IPC_DEVICE_UART2		1
++#define BFLB_IPC_DEVICE_USB		2
+ 
+ #endif
+-- 
+2.34.1
+
