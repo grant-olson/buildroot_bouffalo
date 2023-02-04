@@ -13,6 +13,7 @@ BLMCUSDK_LICENSE_FILES = LICENSE
 HOST_BLMCUSDK_DEPENDENCIES = host-cmake host-riscv-unknown-elf-gcc
 
 define HOST_BLMCUSDK_INSTALL_CMDS
+	mkdir -p $(HOST_DIR)/opt
 	$(call SYSTEM_RSYNC,$(@D),$(HOST_DIR)/opt/bl_mcu_sdk)
 endef
 
