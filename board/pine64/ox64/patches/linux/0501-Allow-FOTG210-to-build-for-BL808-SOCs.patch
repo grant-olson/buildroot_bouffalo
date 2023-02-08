@@ -1,0 +1,25 @@
+From 6b35313af3b90101e4203ae56098e869263f6608 Mon Sep 17 00:00:00 2001
+From: "Grant T. Olson" <kgo@grant-olson.net>
+Date: Wed, 8 Feb 2023 15:55:35 -0500
+Subject: [PATCH 501/501] Allow FOTG210 to build for BL808 SOCs
+
+---
+ drivers/usb/fotg210/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/fotg210/Kconfig b/drivers/usb/fotg210/Kconfig
+index 2b05968735ba..70bee0f984ea 100644
+--- a/drivers/usb/fotg210/Kconfig
++++ b/drivers/usb/fotg210/Kconfig
+@@ -4,7 +4,7 @@ config USB_FOTG210
+ 	tristate "Faraday FOTG210 USB2 Dual Role controller"
+ 	depends on USB || USB_GADGET
+ 	depends on HAS_DMA && HAS_IOMEM
+-	depends on ARCH_GEMINI || COMPILE_TEST
++	depends on SOC_BOUFFALOLAB || ARCH_GEMINI || COMPILE_TEST
+ 	default ARCH_GEMINI
+ 	select MFD_SYSCON
+ 	help
+-- 
+2.34.1
+

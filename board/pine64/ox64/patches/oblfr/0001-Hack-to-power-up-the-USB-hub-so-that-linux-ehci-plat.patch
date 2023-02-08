@@ -1,14 +1,15 @@
-From adf22e474a486360b5736b8608ff0e75055248cc Mon Sep 17 00:00:00 2001
+From 0f223a4eea9b0e37460c33b51e3625c6557fb0db Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Sun, 5 Feb 2023 22:55:09 -0500
-Subject: [PATCH] Hack to power up the USB hub
+Subject: [PATCH 1/4] Hack to power up the USB hub so that linux ehci-platform
+ subsystem can see it.
 
 ---
  apps/m0_lowload/CMakeLists.txt    |   1 +
  apps/m0_lowload/sdkconfig.default |   3 +-
  apps/m0_lowload/src/main.c        |   4 +-
- apps/m0_lowload/src/usb_hc_init.c | 127 ++++++++++++++++++++++++++++++
- 4 files changed, 133 insertions(+), 2 deletions(-)
+ apps/m0_lowload/src/usb_hc_init.c | 158 ++++++++++++++++++++++++++++++
+ 4 files changed, 164 insertions(+), 2 deletions(-)
  create mode 100644 apps/m0_lowload/src/usb_hc_init.c
 
 diff --git a/apps/m0_lowload/CMakeLists.txt b/apps/m0_lowload/CMakeLists.txt
@@ -55,14 +56,45 @@ index deb161f..a2894fb 100755
      if (oblfr_mailbox_init() != OBLFR_OK) {
 diff --git a/apps/m0_lowload/src/usb_hc_init.c b/apps/m0_lowload/src/usb_hc_init.c
 new file mode 100644
-index 0000000..5682f8f
+index 0000000..245daab
 --- /dev/null
 +++ b/apps/m0_lowload/src/usb_hc_init.c
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,158 @@
++//
++// This is the bare bones code to power up the USB subsystem so that
++// it can be used once the system is booted.
++//
++// All code was taken from the bl_mcu_sdk, primarily from the file:
++//
++// drivers/lhal/src/bflb_usb_v2.c
++// 
++
++/**
++ * @brief
++ *
++ * Copyright (c) 2021 Bouffalolab team
++ *
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.  The
++ * ASF licenses this file to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance with the
++ * License.  You may obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
++ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
++ * License for the specific language governing permissions and limitations
++ * under the License.
++ *
++ */
++
 +#include <stdint.h>
 +
-+#define getreg32(a)                        (*(volatile uint32_t *)(uintptr_t)(a))
-+#define putreg32(v, a)                     (*(volatile uint32_t *)(uintptr_t)(a) = (v))
++#define getreg32(a)               (*(volatile uint32_t *)(uintptr_t)(a))
++#define putreg32(v, a)            (*(volatile uint32_t *)(uintptr_t)(a) = (v))
 +
 +
 +// ONES WE ACTUALLY NEED
