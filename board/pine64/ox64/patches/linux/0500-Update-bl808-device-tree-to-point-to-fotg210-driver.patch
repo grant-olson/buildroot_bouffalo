@@ -52,7 +52,7 @@ index dd795667dea6..4ee73a1d37a5 100644
  						       BFLB_IPC_DEVICE_USB
  						       IRQ_TYPE_EDGE_RISING>;
 -                       mboxes = <&ipclic BFLB_IPC_SOURCE_M0 BFLB_IPC_DEVICE_USB>;
-+			dr_mode = "peripheral";
++			dr_mode = "host";
  			clocks = <&xtal>;
  			status = "disabled";
  		};

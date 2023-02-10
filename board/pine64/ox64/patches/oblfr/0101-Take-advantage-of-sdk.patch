@@ -1,0 +1,106 @@
+From 2065c0709621e106b6ceca47386efc1d3c6d5a9f Mon Sep 17 00:00:00 2001
+From: "Grant T. Olson" <kgo@grant-olson.net>
+Date: Thu, 9 Feb 2023 09:43:24 -0500
+Subject: [PATCH 101/101] Take advantage of sdk
+
+---
+ components/usbphy/include/oblfr_usbphy.h | 42 ++----------------------
+ components/usbphy/src/oblfr_usbphy.c     |  4 ++-
+ 2 files changed, 6 insertions(+), 40 deletions(-)
+
+diff --git a/components/usbphy/include/oblfr_usbphy.h b/components/usbphy/include/oblfr_usbphy.h
+index 6b1c2c1..91d9584 100644
+--- a/components/usbphy/include/oblfr_usbphy.h
++++ b/components/usbphy/include/oblfr_usbphy.h
+@@ -1,4 +1,4 @@
+-// Copyright () 2023 OpenBuffalo
++// Portions Copyright () 2023 OpenBuffalo
+ /**
+   ******************************************************************************
+   * @file    usb_v2_reg.h
+@@ -39,23 +39,15 @@
+ 
+ #include <stdint.h>
+ 
+-#define getreg32(a)               (*(volatile uint32_t *)(uintptr_t)(a))
+-#define putreg32(v, a)            (*(volatile uint32_t *)(uintptr_t)(a) = (v))
+-
+-
+ // SUBSYSTEMS
+ #define BLFB_USB_BASE ((uint32_t)0x20072000)
+ #define BFLB_PDS_BASE ((uint32_t)0x2000e000)
+ 
+-// REGISTERS
+-
+-#define USB_OTG_CSR_OFFSET          (0x80)  /* OTG_CSR */
+-#define USB_GLB_INT_OFFSET          (0xC4)  /* GLB_INT */
+-
++// PDS REGISTERS
+ #define PDS_USB_CTL_OFFSET      (0x500) /* usb_ctl */
+ #define PDS_USB_PHY_CTRL_OFFSET (0x504) /* usb_phy_ctrl */
+ 
+-// REGISTER VALUES
++// PDS REGISTER VALUES
+ 
+ /* 0x500 : usb_ctl */
+ #define PDS_REG_USB_SW_RST_N   (1 << 0U)
+@@ -75,34 +67,6 @@
+ #define PDS_REG_USB_PHY_PLLALIV      (1 << 5U)
+ #define PDS_REG_PU_USB20_PSW         (1 << 6U)
+ 
+-/* 0x80 : OTG_CSR */
+-#define USB_B_BUS_REQ             (1 << 0U)
+-#define USB_B_HNP_EN              (1 << 1U)
+-#define USB_B_DSCHRG_VBUS         (1 << 2U)
+-#define USB_A_BUS_REQ_HOV         (1 << 4U)
+-#define USB_A_BUS_DROP_HOV        (1 << 5U)
+-#define USB_A_SET_B_HNP_EN        (1 << 6U)
+-#define USB_A_SRP_DET_EN          (1 << 7U)
+-#define USB_A_SRP_RESP_TYP        (1 << 8U)
+-#define USB_ID_FLT_SEL            (1 << 9U)
+-#define USB_VBUS_FLT_SEL_HOV_POV  (1 << 10U)
+-#define USB_HDISCON_FLT_SEL_HOV   (1 << 11U)
+-#define USB_IDPULUP_HOV_POV       (1 << 13U)
+-#define USB_B_SESS_END_POV        (1 << 16U)
+-#define USB_B_SESS_VLD_POV        (1 << 17U)
+-#define USB_A_SESS_VLD            (1 << 18U)
+-#define USB_VBUS_VLD_HOV          (1 << 19U)
+-#define USB_CROLE_HOV_POV         (1 << 20U)
+-#define USB_ID_HOV_POV            (1 << 21U)
+-#define USB_SPD_TYP_HOV_POV_SHIFT (22U)
+-#define USB_SPD_TYP_HOV_POV_MASK  (0x3 << USB_SPD_TYP_HOV_POV_SHIFT)
+-
+-/* 0xC4 : GLB_INT */
+-#define USB_MDEV_INT (1 << 0U)
+-#define USB_MOTG_INT (1 << 1U)
+-#define USB_MHC_INT  (1 << 2U)
+-
+-
+ void bflb_usb_phy_init(void);
+ 
+ #endif
+diff --git a/components/usbphy/src/oblfr_usbphy.c b/components/usbphy/src/oblfr_usbphy.c
+index 8097607..8429deb 100644
+--- a/components/usbphy/src/oblfr_usbphy.c
++++ b/components/usbphy/src/oblfr_usbphy.c
+@@ -8,7 +8,7 @@
+ // drivers/lhal/src/bflb_usb_v2.c
+ // 
+ 
+-// Copyright (c) 2023 OpenBuffalo
++// Portions Copyright (c) 2023 OpenBuffalo
+ 
+ /**
+  * @brief
+@@ -32,6 +32,8 @@
+  *
+  */
+ 
++#include <arch/risc-v/riscv_arch.h>
++#include <hardware/usb_v2_reg.h>
+ #include "oblfr_usbphy.h"
+ 
+ void bflb_usb_phy_init(void)
+-- 
+2.34.1
+
