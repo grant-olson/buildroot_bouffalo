@@ -1,0 +1,177 @@
+From b47f4b2f9452ab55e9a9c66ddb484ece7296066b Mon Sep 17 00:00:00 2001
+From: "Grant T. Olson" <kgo@grant-olson.net>
+Date: Wed, 15 Feb 2023 23:00:51 -0500
+Subject: [PATCH 102/103] Patches to make faraday fork fotg210 drivers work on
+ linux 6.2
+
+---
+ drivers/usb/gadget/udc/fotg210-udc.c | 25 ++++++++++++++++--------
+ drivers/usb/host/Kconfig             |  2 +-
+ drivers/usb/host/fotg210-hcd.c       | 29 ++++++++++++++++------------
+ 3 files changed, 35 insertions(+), 21 deletions(-)
+
+diff --git a/drivers/usb/gadget/udc/fotg210-udc.c b/drivers/usb/gadget/udc/fotg210-udc.c
+index 859b9a5a15a9..af61ec33ad86 100644
+--- a/drivers/usb/gadget/udc/fotg210-udc.c
++++ b/drivers/usb/gadget/udc/fotg210-udc.c
+@@ -22,6 +22,16 @@
+ 
+ #define	DRIVER_DESC	"FOTG210 USB Device Controller Driver"
+ 
++/*
++ * Test Mode Selectors
++ * See USB 2.0 spec Table 9-7
++ */
++#define	TEST_J		1
++#define	TEST_K		2
++#define	TEST_SE0_NAK	3
++#define	TEST_PACKET		4
++#define	TEST_FORCE_EN	5
++
+ /* Note: CONFIG_USB_FOTG210_UDC_DOUBLE_FIFO usage
+  * EP1 = FIFO 0~1, EP2 = FIFO 2~3
+  * Please note that FIFO number is from 0~3, if user has configured EP numbers more than 2,
+@@ -2042,7 +2052,6 @@ static int fotg210_udc_start(struct usb_gadget *g,
+ #endif
+ 
+ 	/* hook up the driver */
+-	driver->driver.bus = NULL;
+ 	fotg210->driver = driver;
+ 
+ #ifdef CONFIG_USB_FOTG210_OTG
+@@ -2170,11 +2179,11 @@ static int fotg210_udc_remove(struct platform_device *pdev)
+ 
+ static int fotg210_udc_probe(struct platform_device *pdev)
+ {
+-	struct resource *res, *ires;
++	struct resource *res;
+ 	struct fotg210_udc *fotg210 = NULL;
+ 	struct fotg210_ep *_ep[FOTG210_MAX_NUM_EP];
+ 	int ret = 0;
+-	int i;
++	int i, irq;
+ 
+ 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+ 	if (!res) {
+@@ -2182,9 +2191,9 @@ static int fotg210_udc_probe(struct platform_device *pdev)
+ 		return -ENODEV;
+ 	}
+ 
+-	ires = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+-	if (!ires) {
+-		pr_err("platform_get_resource IORESOURCE_IRQ error.\n");
++	irq = platform_get_irq(pdev, 0);
++	if (irq < 0) {
++		pr_err("Couldn't get IRQ.\n");
+ 		return -ENODEV;
+ 	}
+ 
+@@ -2255,7 +2264,7 @@ static int fotg210_udc_probe(struct platform_device *pdev)
+ 
+ 	fotg210_init(fotg210);
+ 
+-	ret = request_irq(ires->start, fotg210_irq, IRQF_SHARED,
++	ret = request_irq(irq, fotg210_irq, IRQF_SHARED,
+ 			  udc_name, fotg210);
+ 	if (ret < 0) {
+ 		pr_err("request_irq error (%d)\n", ret);
+@@ -2284,7 +2293,7 @@ static int fotg210_udc_probe(struct platform_device *pdev)
+ 	return 0;
+ 
+ err_add_udc:
+-	free_irq(ires->start, fotg210);
++	free_irq(irq, fotg210);
+ 
+ err_req:
+ 	fotg210_ep_free_request(&fotg210->ep[0]->ep, fotg210->ep0_req);
+diff --git a/drivers/usb/host/Kconfig b/drivers/usb/host/Kconfig
+index 1bdd2bb4bfe0..8e8db71021a5 100644
+--- a/drivers/usb/host/Kconfig
++++ b/drivers/usb/host/Kconfig
+@@ -392,7 +392,7 @@ config USB_ISP1362_HCD
+ config USB_FOTG210_HCD
+ 	tristate "FOTG210 HCD support"
+ 	depends on USB && HAS_DMA && HAS_IOMEM
+-	---help---
++	help
+ 	  Faraday FOTG210 is an OTG controller which can be configured as
+ 	  an USB2.0 host. It is designed to meet USB2.0 EHCI specification
+ 	  with minor modification.
+diff --git a/drivers/usb/host/fotg210-hcd.c b/drivers/usb/host/fotg210-hcd.c
+index 83a1c032f94c..5f09513b5e05 100644
+--- a/drivers/usb/host/fotg210-hcd.c
++++ b/drivers/usb/host/fotg210-hcd.c
+@@ -55,6 +55,16 @@ static const char hcd_name[] = "fotg210_hcd";
+ #undef FOTG210_URB_TRACE
+ #define FOTG210_STATS
+ 
++/*
++ * Test Mode Selectors
++ * See USB 2.0 spec Table 9-7
++ */
++#define	TEST_J		1
++#define	TEST_K		2
++#define	TEST_SE0_NAK	3
++#define	TEST_PACKET		4
++#define	TEST_FORCE_ENABLE	5
++
+ /* magic numbers that can affect system performance */
+ #define FOTG210_TUNE_CERR	3 /* 0-3 qtd retries; 0 == don't stop */
+ #define FOTG210_TUNE_RL_HS	4 /* nak throttle; see 4.9 */
+@@ -3142,7 +3152,7 @@ static struct list_head *qh_urb_transaction(struct fotg210_hcd *fotg210,
+ 		token |= (1 /* "in" */ << 8);
+ 	/* else it's already initted to "out" pid (0 << 8) */
+ 
+-	maxpacket = max_packet(usb_maxpacket(urb->dev, urb->pipe, !is_input));
++	maxpacket = max_packet(usb_maxpacket(urb->dev, urb->pipe));
+ 
+ 	/*
+ 	 * buffer gets wrapped in one or more qtds;
+@@ -3273,7 +3283,7 @@ static struct fotg210_qh *qh_make(struct fotg210_hcd *fotg210, struct urb *urb,
+ 
+ 	is_input = usb_pipein(urb->pipe);
+ 	type = usb_pipetype(urb->pipe);
+-	maxp = usb_maxpacket(urb->dev, urb->pipe, !is_input);
++	maxp = usb_maxpacket(urb->dev, urb->pipe);
+ 
+ 	/* 1024 byte maxpacket is a hardware ceiling.  High bandwidth
+ 	 * acts like up to 3KB, but is built from smaller packets.
+@@ -4523,7 +4533,7 @@ static void iso_stream_init(struct fotg210_hcd *fotg210,
+ 	 */
+ 	epnum = usb_pipeendpoint(pipe);
+ 	is_input = usb_pipein(pipe) ? USB_DIR_IN : 0;
+-	maxp = usb_maxpacket(dev, pipe, !is_input);
++	maxp = usb_maxpacket(dev, pipe);
+ 	if (is_input)
+ 		buf1 = (1 << 11);
+ 	else
+@@ -6120,7 +6130,7 @@ static int hcd_fotg210_init(struct usb_hcd *hcd)
+ 	fotg210->command = temp;
+ 
+ 	/* Accept arbitrarily long scatter-gather lists */
+-	if (!(hcd->driver->flags & HCD_LOCAL_MEM))
++	if (!hcd->localmem_pool)
+ 		hcd->self.sg_tablesize = ~0;
+ 	return 0;
+ }
+@@ -6862,14 +6872,9 @@ static int fotg210_hcd_probe(struct platform_device *pdev)
+ 
+ 	pdev->dev.power.power_state = PMSG_ON;
+ 
+-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+-	if (!res) {
+-		dev_err(dev, "Found HC with no IRQ. Check %s setup!\n",
+-				dev_name(dev));
+-		return -ENODEV;
+-	}
+-
+-	irq = res->start;
++	irq = platform_get_irq(pdev, 0);
++	if (irq < 0)
++		return irq;
+ 
+ 	hcd = usb_create_hcd(&fotg210_fotg210_hc_driver, dev,
+ 			dev_name(dev));
+-- 
+2.34.1
+
