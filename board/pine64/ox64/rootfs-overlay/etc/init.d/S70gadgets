@@ -1,0 +1,50 @@
+# Set mode to bring up. Current options are:
+#
+#   adbd (default) - android debug bridge. Small, reliable, easy to use.
+#   ether - ethernet access. Requires some work to route
+#   mass_storage - fake disk
+#   none - do nothing but don't error.
+#
+
+set -e
+
+MODE=adbd
+
+case $1 in
+	start)
+	case $MODE in
+		adbd)
+			modprobe g_ffs idVendor=0x18d1 idProduct=0x4e42 iSerialNumber="OBFL Ox64"
+			mkdir -p /dev/usb-ffs/adb
+			mount -t functionfs adb /dev/usb-ffs/adb -o uid=2000,gid=2000
+			nohup adbd &
+			echo "Gadgets: Successfully set up ADBD."
+			;;
+		ether)
+			modprobe g_ether
+			ifconfig usb0 192.168.64.1 netmask 255.255.255.0 up
+			echo "Gadgets: Successfully set up USB0."
+			;;
+		mass_storage)
+			cp /var/gadgets/mass_storage.template /var/gadgets/mass_storage
+			modprobe g_mass_storage file=/var/gadgets/mass_storage removable=y ro=y
+			;;
+		serial)
+			modprobe g_serial
+			#getty -L -l /bin/sh ttyGS0 115200 vt100
+			echo "Gadgets: Started ttyGS0 but it doesn't do anything."
+			;;
+		none)
+			;;
+		*)
+			echo "Gadgets: UNKNOWN MODE ${MODE}."
+			exit 1
+			;;
+		esac
+		;;
+
+	*)
+		echo "Gadgets: Ignoring action ${1}..."	
+		;;
+
+esac
