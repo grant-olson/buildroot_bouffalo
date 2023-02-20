@@ -1,5 +1,87 @@
 # Buildroot overlay for BL808 based boards
 
+## Gadgets Playground
+
+This fork provides a playground to develop USB gadgets as we're
+ironing out all the issues. Installing this fork of buildroot_bouffalo
+will add a service that starts a usb gadget on boot that will be
+visible to your host system when connecting to the usb-c connector.
+
+By default this gadget will be the adb gadget, which is reliable and
+allows you to use adb to connect, copy files, restart, etc:
+
+```
+adb shell
+adb push test_file /root/
+adb pull /etc/good.conf .
+```
+
+To change the default gadget, edit the `MODE` listed in the file
+`/etc/init.d/S70gadgets` on your Ox64 and reboot. It's as simple as
+that!
+
+## How can you help?
+
+* Install and try various gadgets. See if they work for you and report
+    any errors.
+* Try building and implementing other gadgets. What other useful things
+    can we do?
+* Improve existing gadgets. It would be awesome if the serial gadget
+    fired up a console. Can the ethernet gadget be made simpler?
+
+## Available Gadgets
+
+### adbd
+
+The target-side adb tools suitable for connection from your adb host.
+
+To see if it's working:
+
+```
+grant@grant-ubuntu ~ % adb devices
+List of devices attached
+OBFL Ox64	device
+
+```
+
+Then `adb shell` etc...
+
+### ether (basic implementation)
+
+This creates a usb based ethernet adapter and applies the IP address
+192.168.64.1 on the Ox64.
+
+To ssh in to the machine you must add a password to the root account
+with `passwd` before enabling the ethernet gadget.
+
+Currently the routing must be configured manually on the host machine.
+
+On ubuntu:
+
+```bash
+ip addr # get the name of the interface such as usb0
+sudo ip addr add 192.168.64.2/24 dev usb0
+```
+
+Then you should be able to `ssh root@192.168.64.1` and gain access,
+use `scp` etc.
+
+You should also be able to set up routes so that you can access the
+internet at large from the Ox64 over the interface. Instructions needed.
+
+
+### mass_storage (basic implementation)
+
+This will show a dummy read only filesystem with what in the future
+would be instructions and information about the project.
+
+### serial (needs features)
+
+This creates a `/dev/ttyACM0` device on a host machine, but my
+attempts to get it to show output or have a console have failed.
+
+## And back to the old README...
+
 ## Usage
 
 ```
