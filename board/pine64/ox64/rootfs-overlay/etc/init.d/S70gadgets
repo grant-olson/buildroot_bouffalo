@@ -12,6 +12,9 @@ MODE=adbd
 
 case $1 in
 	start)
+	
+	[ ! -d "/sys/class/udc/20072000.usb_udc" ] && echo "Gadgets: No UDC, must be in HOST mode" && exit 1
+	
 	case $MODE in
 		adbd)
 			modprobe g_ffs idVendor=0x18d1 idProduct=0x4e42 iSerialNumber="OBFL Ox64"
