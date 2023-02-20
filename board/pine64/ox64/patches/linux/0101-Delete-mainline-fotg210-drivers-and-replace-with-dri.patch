@@ -1,7 +1,7 @@
 From de22040d604ebd5c70f9be8e1435b168955cf95b Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Wed, 15 Feb 2023 22:52:00 -0500
-Subject: [PATCH 101/103] Delete mainline fotg210 drivers and replace with
+Subject: [PATCH 101/104] Delete mainline fotg210 drivers and replace with
  drivers from Faraday linux fork. This commit is all Faraday only code, no
  patches.
 

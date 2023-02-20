@@ -1,7 +1,7 @@
 From b47f4b2f9452ab55e9a9c66ddb484ece7296066b Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Wed, 15 Feb 2023 23:00:51 -0500
-Subject: [PATCH 102/103] Patches to make faraday fork fotg210 drivers work on
+Subject: [PATCH 102/104] Patches to make faraday fork fotg210 drivers work on
  linux 6.2
 
 ---

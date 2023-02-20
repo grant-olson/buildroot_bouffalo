@@ -1,0 +1,25 @@
+From 8c63da80d6c93675050e6d13ad050491cc0db4e9 Mon Sep 17 00:00:00 2001
+From: "Grant T. Olson" <kgo@grant-olson.net>
+Date: Mon, 20 Feb 2023 16:01:19 -0500
+Subject: [PATCH 104/104] Fix for runtime error when plugging in USB objects
+
+---
+ drivers/usb/host/fotg210-hcd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/host/fotg210-hcd.c b/drivers/usb/host/fotg210-hcd.c
+index 5f09513b5e05..ea7d648d9040 100644
+--- a/drivers/usb/host/fotg210-hcd.c
++++ b/drivers/usb/host/fotg210-hcd.c
+@@ -6795,7 +6795,7 @@ static const struct hc_driver fotg210_fotg210_hc_driver = {
+ 	 * generic hardware linkage
+ 	 */
+ 	.irq			= fotg210_irq,
+-	.flags			= HCD_MEMORY | HCD_USB2,
++	.flags			= HCD_MEMORY | HCD_DMA | HCD_USB2,
+ 
+ 	/*
+ 	 * basic lifecycle operations
+-- 
+2.34.1
+

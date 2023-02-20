@@ -1,7 +1,7 @@
 From adae639244ae0dc0dbc1accd4171f56eaf9bdc5c Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Sun, 19 Feb 2023 15:25:26 -0500
-Subject: [PATCH 100/103] Update device tree to sync with arm000 tree
+Subject: [PATCH 100/104] Update device tree to sync with arm000 tree
 
 ---
  .../dts/bouffalolab/bl808-pine64-ox64.dts     |  8 ++++++

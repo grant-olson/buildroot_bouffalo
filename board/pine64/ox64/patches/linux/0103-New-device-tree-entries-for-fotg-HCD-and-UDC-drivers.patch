@@ -1,7 +1,7 @@
 From 7db4088981e2378d8cf3063ba95b6c177304ae27 Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Sun, 19 Feb 2023 15:29:34 -0500
-Subject: [PATCH 103/103] New device tree entries for fotg HCD and UDC drivers.
+Subject: [PATCH 103/104] New device tree entries for fotg HCD and UDC drivers.
 
 ---
  .../boot/dts/bouffalolab/bl808-pine64-ox64.dts     |  2 +-
