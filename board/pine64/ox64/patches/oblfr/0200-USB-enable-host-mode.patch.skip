@@ -1,0 +1,13 @@
+diff --git a/components/usbphy/src/oblfr_usbphy.c b/components/usbphy/src/oblfr_usbphy.c
+index 46f474d..3ee4ae3 100644
+--- a/components/usbphy/src/oblfr_usbphy.c
++++ b/components/usbphy/src/oblfr_usbphy.c
+@@ -39,7 +39,7 @@
+ #include "log.h"
+ 
+ // Enable USB A mode instead of B
+-//#define USB_HOST
++#define USB_HOST
+ 
+ void bflb_usb_phy_init(void)
+ {
