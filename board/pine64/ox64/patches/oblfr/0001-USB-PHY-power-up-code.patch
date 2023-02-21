@@ -1,7 +1,7 @@
 From 2db3b3b3bc31b0664588fea502b1b5fdbab5e250 Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Thu, 9 Feb 2023 09:11:19 -0500
-Subject: [PATCH 1/2] USB PHY power up code
+Subject: [PATCH 1/4] USB PHY power up code
 
 ---
  apps/m0_lowload/sdkconfig.default        |  4 +-

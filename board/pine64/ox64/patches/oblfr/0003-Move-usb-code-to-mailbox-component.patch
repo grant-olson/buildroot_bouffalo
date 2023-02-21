@@ -1,0 +1,248 @@
+From a7a45066c7874e24c1f69537e9934d3916fe8d40 Mon Sep 17 00:00:00 2001
+From: "Grant T. Olson" <kgo@grant-olson.net>
+Date: Tue, 21 Feb 2023 10:48:27 -0500
+Subject: [PATCH 3/4] Move usb code to mailbox component
+
+---
+ apps/m0_lowload/sdkconfig.default             |  1 -
+ apps/m0_lowload/src/main.c                    |  8 +-------
+ components/CMakeLists.txt                     |  1 -
+ components/mailbox/CMakeLists.txt             |  2 +-
+ components/mailbox/Kconfig                    |  8 ++++++++
+ .../include/oblfr_usb_peripheral.h}           |  3 ++-
+ components/mailbox/src/oblfr_mailbox.c        |  7 ++++++-
+ .../src/oblfr_usb_peripheral.c}               | 20 +++++++++++--------
+ components/usbphy/CMakeLists.txt              |  3 ---
+ components/usbphy/Kconfig                     | 10 ----------
+ components/usbphy/README.md                   |  3 ---
+ 11 files changed, 30 insertions(+), 36 deletions(-)
+ rename components/{usbphy/include/oblfr_usbphy.h => mailbox/include/oblfr_usb_peripheral.h} (98%)
+ rename components/{usbphy/src/oblfr_usbphy.c => mailbox/src/oblfr_usb_peripheral.c} (90%)
+ delete mode 100644 components/usbphy/CMakeLists.txt
+ delete mode 100644 components/usbphy/Kconfig
+ delete mode 100644 components/usbphy/README.md
+
+diff --git a/apps/m0_lowload/sdkconfig.default b/apps/m0_lowload/sdkconfig.default
+index e7b8f6a..5b8da13 100644
+--- a/apps/m0_lowload/sdkconfig.default
++++ b/apps/m0_lowload/sdkconfig.default
+@@ -2,4 +2,3 @@ CONFIG_COMPONENT_MAILBOX=y
+ CONFIG_COMPONENT_MAILBOX_IRQFWD_SDH=y
+ CONFIG_COMPONENT_MAILBOX_IRQFWD_GPIO=y
+ CONFIG_COMPONENT_MAILBOX_IRQFWD_USB=y
+-CONFIG_COMPONENT_USBPHY=y
+diff --git a/apps/m0_lowload/src/main.c b/apps/m0_lowload/src/main.c
+index 2264fc4..deb161f 100755
+--- a/apps/m0_lowload/src/main.c
++++ b/apps/m0_lowload/src/main.c
+@@ -25,22 +25,16 @@
+ #include <board.h>
+ #include <bflb_mtimer.h>
+ #include "oblfr_mailbox.h"
+-#include "oblfr_usbphy.h"
+ #include "sdkconfig.h"
+ 
+ #define DBG_TAG "MAIN"
+ #include <log.h>
+ 
++
+ int main(void)
+ {
+     board_init();
+ 
+-#ifdef CONFIG_COMPONENT_USBPHY
+-   
+-    bflb_usb_phy_init();
+-
+-#endif
+-    
+     LOG_I("Starting Mailbox Handlers\r\n");
+ 
+     if (oblfr_mailbox_init() != OBLFR_OK) {
+diff --git a/components/CMakeLists.txt b/components/CMakeLists.txt
+index ee20396..e86d60c 100644
+--- a/components/CMakeLists.txt
++++ b/components/CMakeLists.txt
+@@ -7,4 +7,3 @@ sdk_add_subdirectory_ifdef(CONFIG_COMPONENT_STATUS_LED indicator)
+ sdk_add_subdirectory_ifdef(CONFIG_COMPONENT_TIMER timer)
+ sdk_add_subdirectory_ifdef(CONFIG_COMPONENT_NVKVS nvkvs)
+ sdk_add_subdirectory_ifdef(CONFIG_COMPONENT_MAILBOX mailbox)
+-sdk_add_subdirectory_ifdef(CONFIG_COMPONENT_USBPHY usbphy)
+diff --git a/components/mailbox/CMakeLists.txt b/components/mailbox/CMakeLists.txt
+index 353f0c7..bfca28b 100644
+--- a/components/mailbox/CMakeLists.txt
++++ b/components/mailbox/CMakeLists.txt
+@@ -1,4 +1,4 @@
+ sdk_generate_library(oblfr_mailbox)
+ sdk_add_include_directories(include)
+-sdk_library_add_sources(${CMAKE_CURRENT_SOURCE_DIR}/src/oblfr_mailbox.c)
++sdk_library_add_sources(${CMAKE_CURRENT_SOURCE_DIR}/src/oblfr_mailbox.c ${CMAKE_CURRENT_SOURCE_DIR}/src/oblfr_usb_peripheral.c )
+ 
+diff --git a/components/mailbox/Kconfig b/components/mailbox/Kconfig
+index 8e493be..dbc46ea 100644
+--- a/components/mailbox/Kconfig
++++ b/components/mailbox/Kconfig
+@@ -27,6 +27,14 @@ config COMPONENT_MAILBOX_IRQFWD_USB
+     help
+         Curently disabled as USB is not working
+ 
++config COMPONENT_MAILBOX_USB_HOST
++        depends on COMPONENT_MAILBOX_IRQFWD_USB
++        bool "Set USB to HOST mode"
++        default n
++    help
++        By default USB operates in peripheral mode. Set this to use the
++        USB adapter as a host device.
++
+ config COMPONENT_MAILBOX_IRQFWD_GPIO
+     bool "Enable IRQ forwarding for GPIO"
+     default y
+diff --git a/components/usbphy/include/oblfr_usbphy.h b/components/mailbox/include/oblfr_usb_peripheral.h
+similarity index 98%
+rename from components/usbphy/include/oblfr_usbphy.h
+rename to components/mailbox/include/oblfr_usb_peripheral.h
+index 413f6d4..3df3fed 100644
+--- a/components/usbphy/include/oblfr_usbphy.h
++++ b/components/mailbox/include/oblfr_usb_peripheral.h
+@@ -39,6 +39,8 @@
+ 
+ #include <stdint.h>
+ 
++void oblfr_usb_peripheral_init(void);
++
+ // SUBSYSTEMS
+ #define BLFB_USB_BASE ((uint32_t)0x20072000)
+ #define BFLB_PDS_BASE ((uint32_t)0x2000e000)
+@@ -67,7 +69,6 @@
+ #define PDS_REG_USB_PHY_PLLALIV      (1 << 5U)
+ #define PDS_REG_PU_USB20_PSW         (1 << 6U)
+ 
+-void bflb_usb_phy_init(void);
+ 
+ // USB REGS
+ 
+diff --git a/components/mailbox/src/oblfr_mailbox.c b/components/mailbox/src/oblfr_mailbox.c
+index afc13cc..b9cc355 100644
+--- a/components/mailbox/src/oblfr_mailbox.c
++++ b/components/mailbox/src/oblfr_mailbox.c
+@@ -22,6 +22,7 @@
+ #include <bflb_clock.h>
+ #include <bflb_gpio.h>
+ #include "oblfr_mailbox.h"
++#include "oblfr_usb_peripheral.h"
+ #define DBG_TAG "MBOX"
+ #include "log.h"
+ 
+@@ -201,6 +202,10 @@ oblfr_err_t oblfr_mailbox_init()
+     }
+ #endif
+ 
++#ifdef CONFIG_COMPONENT_MAILBOX_IRQFWD_USB
++    oblfr_usb_peripheral_init();
++#endif
++    
+     return OBLFR_OK;
+ }
+ 
+@@ -214,4 +219,4 @@ oblfr_err_t oblfr_mailbox_dump()
+     }
+     LOG_I("====================================\r\n");
+     return OBLFR_OK;
+-}
+\ No newline at end of file
++}
+diff --git a/components/usbphy/src/oblfr_usbphy.c b/components/mailbox/src/oblfr_usb_peripheral.c
+similarity index 90%
+rename from components/usbphy/src/oblfr_usbphy.c
+rename to components/mailbox/src/oblfr_usb_peripheral.c
+index 46f474d..b665424 100644
+--- a/components/usbphy/src/oblfr_usbphy.c
++++ b/components/mailbox/src/oblfr_usb_peripheral.c
+@@ -34,14 +34,16 @@
+ 
+ #include <arch/risc-v/riscv_arch.h>
+ #include <hardware/usb_v2_reg.h>
+-#include "oblfr_usbphy.h"
+-#define DBG_TAG "USBPHY"
++#include <board.h>
++#include <bflb_mtimer.h>
++#include "oblfr_usb_peripheral.h"
++#define DBG_TAG "USB"
+ #include "log.h"
+ 
+ // Enable USB A mode instead of B
+-//#define USB_HOST
++#define USB_HOST
+ 
+-void bflb_usb_phy_init(void)
++void oblfr_usb_peripheral_init(void)
+ {
+     uint32_t regval;
+ 
+@@ -55,6 +57,8 @@ void bflb_usb_phy_init(void)
+     /* wait(soc616_b0.usb_uclk);                                          */
+ 
+ 
++    LOG_I("Initializing USB...\r\n");
++    
+     regval = getreg32(BFLB_PDS_BASE + PDS_USB_PHY_CTRL_OFFSET);
+     regval &= ~PDS_REG_USB_PHY_XTLSEL_MASK;
+     putreg32(regval, BFLB_PDS_BASE + PDS_USB_PHY_CTRL_OFFSET);
+@@ -93,15 +97,15 @@ void bflb_usb_phy_init(void)
+     bflb_mtimer_delay_ms(2);
+     
+     regval = getreg32(BFLB_PDS_BASE + PDS_USB_CTL_OFFSET);
+-    LOG_I("PDS CTL %x\r\n", regval);
+-    //regval &= ~PDS_REG_USB_DRVBUS_POL;
+ 
+-#ifdef USB_HOST
++#ifdef CONFIG_COMPONENT_MAILBOX_USB_HOST
++    LOG_I("USB Initialized in HOST mode\r\n");
+     regval &= ~PDS_REG_USB_IDDIG;
+ #else
++    LOG_I("USB Initialized in DEVICE mode\r\n");
+     regval |= PDS_REG_USB_IDDIG;
+ #endif
+-    
++
+     putreg32(regval, BFLB_PDS_BASE + PDS_USB_CTL_OFFSET);
+ 
+     bflb_mtimer_delay_ms(10);
+diff --git a/components/usbphy/CMakeLists.txt b/components/usbphy/CMakeLists.txt
+deleted file mode 100644
+index b932d26..0000000
+--- a/components/usbphy/CMakeLists.txt
++++ /dev/null
+@@ -1,3 +0,0 @@
+-sdk_generate_library(oblfr_usbphy)
+-sdk_add_include_directories(include)
+-sdk_library_add_sources(${CMAKE_CURRENT_SOURCE_DIR}/src/oblfr_usbphy.c)
+diff --git a/components/usbphy/Kconfig b/components/usbphy/Kconfig
+deleted file mode 100644
+index 203800c..0000000
+--- a/components/usbphy/Kconfig
++++ /dev/null
+@@ -1,10 +0,0 @@
+-config COMPONENT_USBPHY
+-    bool "USBPHY Support for Linux"
+-    default y
+-    help
+-        This initialize the power supply for the USB chip. Enable this
+-	component if you are running linux on the D0 core and want to have
+-	working USB
+-
+-        Please see the README.md file in the usbphy component directory
+-        for more information
+diff --git a/components/usbphy/README.md b/components/usbphy/README.md
+deleted file mode 100644
+index 1fcae76..0000000
+--- a/components/usbphy/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-#usbphy
+-
+-Do the physical power up of the FOTG210 USB device so that linux can use it.
+\ No newline at end of file
+-- 
+2.34.1
+

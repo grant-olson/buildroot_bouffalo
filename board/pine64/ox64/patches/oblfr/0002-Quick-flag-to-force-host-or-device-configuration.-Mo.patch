@@ -1,7 +1,7 @@
 From 363980dcf98fb4c6555161e376351f73fac82bc9 Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Mon, 13 Feb 2023 08:52:14 -0500
-Subject: [PATCH 2/2] Quick flag to force host or device configuration. Move to
+Subject: [PATCH 2/4] Quick flag to force host or device configuration. Move to
  a Kconfig var later
 
 ---
