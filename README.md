@@ -7,14 +7,16 @@ ironing out all the issues. Installing this fork of buildroot_bouffalo
 will add a service that starts a usb gadget on boot that will be
 visible to your host system when connecting to the usb-c connector.
 
-By default this gadget will be the adb gadget, which is reliable and
-allows you to use adb to connect, copy files, restart, etc:
+By default this will start a ACM serial gadget as that's expected to
+work on most machines without any additional configuration.
 
-```
-adb shell
-adb push test_file /root/
-adb pull /etc/good.conf .
-```
+Developers will probably want to switch to the `adbd` gadget so they
+can use adb to achieve a shell and quickly copy files.
+
+The ethernet gadget has some issues bouncing up and down, but seems to
+work somewhat if you take care to set up routing on your computer so
+that it gets the same routing when the device re-appears. See the list
+of gadgets for additional notes.
 
 To change the default gadget, edit the `MODE` listed in the file
 `/etc/init.d/S70gadgets` on your Ox64 and reboot. It's as simple as
@@ -29,7 +31,12 @@ that!
 * Improve existing gadgets. It would be awesome if the serial gadget
     fired up a console. Can the ethernet gadget be made simpler?
 
-## Available Gadgets
+## Available Gadget Modes
+
+### serial
+
+This creates a `/dev/ttyACM0` device on a host machine with a standard
+shell.
 
 ### adbd
 
@@ -46,7 +53,7 @@ OBFL Ox64	device
 
 Then `adb shell` etc...
 
-### ether (basic implementation)
+### ether
 
 This creates a usb based ethernet adapter and applies the IP address
 192.168.64.1 on the Ox64.
@@ -54,7 +61,9 @@ This creates a usb based ethernet adapter and applies the IP address
 To ssh in to the machine you must add a password to the root account
 with `passwd` before enabling the ethernet gadget.
 
-Currently the routing must be configured manually on the host machine.
+Currently the network connection seems to drop and restore. Routing
+must be configured manually on the host machine so that it maintains
+the same IP and subnet which should allow TCP sessions to work.
 
 On ubuntu open the **Advanced Networking** app.
 
@@ -63,30 +72,25 @@ On ubuntu open the **Advanced Networking** app.
 3. Select **usb0** device from drop down.
 4. On IPv4 tab, add an additional static address:
     * Address - 192.168.64.2
-    * Netmask - 255.255.255.0
+    * Netmask - 255.255.255.240
 5. Save.
 
-You should have a good network connection.
 
 Then you should be able to `ssh root@192.168.64.1` and gain access,
 use `scp` etc.
 
-You should also be able to set up routes so that you can access the
-internet at large from the Ox64 over the interface. Instructions needed.
+TODO: writeup clear instructions on routing from Ox64 to internet at
+large.
 
-# ncm (basic implementation)
+# ncm
 
 Alternate USB network driver using the CDC NCM subclass standard.
+Not sure if this is better.
 
-### mass_storage (basic implementation)
+### mass_storage (demo implementation)
 
 This will show a dummy read only filesystem with what in the future
 would be instructions and information about the project.
-
-### serial (needs features)
-
-This creates a `/dev/ttyACM0` device on a host machine, but my
-attempts to get it to show output or have a console have failed.
 
 ## And back to the old README...
 
