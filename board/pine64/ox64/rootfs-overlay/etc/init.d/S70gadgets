@@ -2,13 +2,15 @@
 #
 #   adbd (default) - android debug bridge. Small, reliable, easy to use.
 #   ether - ethernet access. Requires some work to route
+#   ncm - ethernet access with advanced ethernet encapsulation. ( Packs
+#         more data in to each USB transfer than ether)
 #   mass_storage - fake disk
 #   none - do nothing but don't error.
 #
 
 set -e
 
-MODE=ether
+MODE=adbd
 HOST_MAC="d5:74:26:dc:0b:e6"
 DEVICE_MAC="b2:d7:ff:9b:1a:27"
 
@@ -27,6 +29,11 @@ case $1 in
 			;;
 		ether)
 			modprobe g_ether dev_addr=${DEVICE_MAC} host_addr=${HOST_MAC}
+			ifconfig usb0 192.168.64.1 netmask 255.255.255.240 up
+			echo "Gadgets: Successfully set up USB0."
+			;;
+		ncm)
+			modprobe g_ncm dev_addr=${DEVICE_MAC} host_addr=${HOST_MAC}
 			ifconfig usb0 192.168.64.1 netmask 255.255.255.240 up
 			echo "Gadgets: Successfully set up USB0."
 			;;
