@@ -95,7 +95,6 @@ case $1 in
 			configfs_init
 			configfs_attach_serial
 			configfs_activate
-			exec setsid -f getty -L ttyGS0 115200 vt100
 			echo "Gadgets: Started Serial Interface"
 			;;
 		none)
