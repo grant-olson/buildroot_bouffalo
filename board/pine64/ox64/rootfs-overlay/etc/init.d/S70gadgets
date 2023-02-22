@@ -10,7 +10,7 @@
 
 set -e
 
-MODE=adbd
+MODE=serial
 HOST_MAC="d5:74:26:dc:0b:e6"
 DEVICE_MAC="b2:d7:ff:9b:1a:27"
 
