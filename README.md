@@ -56,12 +56,17 @@ with `passwd` before enabling the ethernet gadget.
 
 Currently the routing must be configured manually on the host machine.
 
-On ubuntu:
+On ubuntu open the **Advanced Networking** app.
 
-```bash
-ip addr # get the name of the interface such as usb0
-sudo ip addr add 192.168.64.2/24 dev usb0
-```
+1. Hit **+**
+2. **Create** new Ethernet connection type.
+3. Select **usb0** device from drop down.
+4. On IPv4 tab, add an additional static address:
+    * Address - 192.168.64.2
+    * Netmask - 255.255.255.0
+5. Save.
+
+You should have a good network connection.
 
 Then you should be able to `ssh root@192.168.64.1` and gain access,
 use `scp` etc.
@@ -69,6 +74,9 @@ use `scp` etc.
 You should also be able to set up routes so that you can access the
 internet at large from the Ox64 over the interface. Instructions needed.
 
+# ncm (basic implementation)
+
+Alternate USB network driver using the CDC NCM subclass standard.
 
 ### mass_storage (basic implementation)
 
