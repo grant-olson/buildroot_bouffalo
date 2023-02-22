@@ -14,6 +14,56 @@ MODE=adbd
 HOST_MAC="d5:74:26:dc:0b:e6"
 DEVICE_MAC="b2:d7:ff:9b:1a:27"
 
+# Set up everything we might want to use in configfs
+configfs_init ()
+{
+	modprobe libcomposite
+	mount -t configfs none /sys/kernel/config
+
+	cd /sys/kernel/config/usb_gadget
+	mkdir g1
+	cd g1
+
+	echo "0x1d6b" > idVendor
+	echo "0x0104" > idProduct
+
+	mkdir strings/0x409
+	echo "0123456789" > strings/0x409/serialnumber
+	echo "OpenBouffalo" > strings/0x409/manufacturer
+	echo "Multifunction Gadget" > strings/0x409/product
+
+	mkdir functions/acm.GS0
+
+#	mkdir functions/ecm.usb0
+#	echo ${HOST_MAC} > functions/ecm.usb0/host_addr
+#	echo ${DEVICE_MAC} > functions/ecm.usb0/dev_addr
+
+	mkdir configs/c.1
+	mkdir configs/c.1/strings/0x409
+
+
+}
+
+configfs_attach_serial()
+{
+	cd /sys/kernel/config/usb_gadget/g1
+	echo "ETH" > configs/c.1/strings/0x409/configuration
+	ln -s functions/acm.GS0 configs/c.1
+}
+
+configfs_attach_eth()
+{
+	cd /sys/kernel/config/usb_gadget/g1
+	echo "ETH" > configs/c.1/strings/0x409/configuration
+	ln -s functions/ecm.usb0 configs/c.1
+}
+
+configfs_activate()
+{
+	cd /sys/kernel/config/usb_gadget/g1
+	echo "20072000.usb_udc" > UDC
+}
+
 case $1 in
 	start)
 	
@@ -42,9 +92,11 @@ case $1 in
 			modprobe g_mass_storage file=/var/gadgets/mass_storage removable=y ro=y
 			;;
 		serial)
-			modprobe g_serial
-			#getty -L -l /bin/sh ttyGS0 115200 vt100
-			echo "Gadgets: Started ttyGS0 but it doesn't do anything."
+			configfs_init
+			configfs_attach_serial
+			configfs_activate
+			exec setsid -f getty -L ttyGS0 115200 vt100
+			echo "Gadgets: Started Serial Interface"
 			;;
 		none)
 			;;
