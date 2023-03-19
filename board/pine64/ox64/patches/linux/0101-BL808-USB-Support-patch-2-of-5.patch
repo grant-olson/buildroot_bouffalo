@@ -1,14 +1,14 @@
-From b47f4b2f9452ab55e9a9c66ddb484ece7296066b Mon Sep 17 00:00:00 2001
+From 2c260c4814d239afc2e5fee1829bd59797125173 Mon Sep 17 00:00:00 2001
 From: "Grant T. Olson" <kgo@grant-olson.net>
 Date: Wed, 15 Feb 2023 23:00:51 -0500
-Subject: [PATCH 102/104] Patches to make faraday fork fotg210 drivers work on
- linux 6.2
+Subject: [PATCH 101/104] BL808 USB Support patch	2 of 5:
 
+Patches to make faraday authored fotg210 drivers for 5.10 work on linux 6.2
 ---
- drivers/usb/gadget/udc/fotg210-udc.c | 25 ++++++++++++++++--------
+ drivers/usb/gadget/udc/fotg210-udc.c | 25 +++++++++++++++-------
  drivers/usb/host/Kconfig             |  2 +-
- drivers/usb/host/fotg210-hcd.c       | 29 ++++++++++++++++------------
- 3 files changed, 35 insertions(+), 21 deletions(-)
+ drivers/usb/host/fotg210-hcd.c       | 31 ++++++++++++++++------------
+ 3 files changed, 36 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/usb/gadget/udc/fotg210-udc.c b/drivers/usb/gadget/udc/fotg210-udc.c
 index 859b9a5a15a9..af61ec33ad86 100644
@@ -98,7 +98,7 @@ index 1bdd2bb4bfe0..8e8db71021a5 100644
  	  an USB2.0 host. It is designed to meet USB2.0 EHCI specification
  	  with minor modification.
 diff --git a/drivers/usb/host/fotg210-hcd.c b/drivers/usb/host/fotg210-hcd.c
-index 83a1c032f94c..5f09513b5e05 100644
+index 83a1c032f94c..ea7d648d9040 100644
 --- a/drivers/usb/host/fotg210-hcd.c
 +++ b/drivers/usb/host/fotg210-hcd.c
 @@ -55,6 +55,16 @@ static const char hcd_name[] = "fotg210_hcd";
@@ -154,6 +154,15 @@ index 83a1c032f94c..5f09513b5e05 100644
  		hcd->self.sg_tablesize = ~0;
  	return 0;
  }
+@@ -6785,7 +6795,7 @@ static const struct hc_driver fotg210_fotg210_hc_driver = {
+ 	 * generic hardware linkage
+ 	 */
+ 	.irq			= fotg210_irq,
+-	.flags			= HCD_MEMORY | HCD_USB2,
++	.flags			= HCD_MEMORY | HCD_DMA | HCD_USB2,
+ 
+ 	/*
+ 	 * basic lifecycle operations
 @@ -6862,14 +6872,9 @@ static int fotg210_hcd_probe(struct platform_device *pdev)
  
  	pdev->dev.power.power_state = PMSG_ON;
