@@ -1,0 +1,14 @@
+diff --git a/components/mailbox/src/oblfr_mailbox.c b/components/mailbox/src/oblfr_mailbox.c
+index a260681..0a57327 100644
+--- a/components/mailbox/src/oblfr_mailbox.c
++++ b/components/mailbox/src/oblfr_mailbox.c
+@@ -157,7 +157,8 @@ static void Send_IPC_IRQ(int device)
+         LOG_E("Invalid IPC IRQ %d\r\n", device);
+         return;
+     }
+-    bflb_irq_disable(ipc_irqs[device].irq);
++    //    Hack fix for race condition
++    //    bflb_irq_disable(ipc_irqs[device].irq);
+     BL_WR_REG(IPC2_BASE, IPC_CPU1_IPC_ISWR, (1 << device));
+     ipc_irqs[device].count++;
+ }
